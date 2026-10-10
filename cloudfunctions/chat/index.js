@@ -1,6 +1,8 @@
 /**
- * 古调新弹 · 数字导师 chat 云函数（v1.1 CloudBase 内置 AI）
+ * 古调新弹 · 数字导师 chat 云函数（v1.2 · CloudBase 内置 AI）
  * ------------------------------------------------------
+ * 流程：限额检查 → 结构化检索诗词 → 组装提示词 → 调内置 AI → 留痕 → 返回
+ * 部署：tcb fn deploy chat -e gudiaoxintan-d6gcb88dxc336fac5 --force --deployMode zip
  * 流程：限额检查 → 结构化检索诗词 → 组装提示词 → 调内置 AI → 留痕 → 返回
  * 部署：tcb fn deploy chat -e gudiaoxintan-d6gcb88dxc336fac5
  *
@@ -204,24 +206,22 @@ async function callAI(systemPrompt, message) {
 // 演示模式：基于检索结果生成确定性回答（链路演示 / 结题演示用）
 function demoReply(poem, question) {
   if (poem) {
-    return [
-      '关于《' + poem.title + '》：',
-      '这是' + (GRADE_LABEL[poem.grade] || '') + '阶段必背篇目，' + (poem.dynasty || '') + '诗人' + poem.author + '的作品（主题：' + (poem.theme || '') + '）。',
-      '原文：' + (poem.lines || []).join(''),
-      '名句：' + poem.famous + '。',
-      poem.notes ? '要点注释：' + poem.notes : '',
-      poem.lesson ? '这首诗平台已配套 AIGC 微课，可在诗词库中观看。' : '',
-      '',
-      '【演示模式】在 CloudBase 控制台开通"AI+"能力后，导师将生成更丰富的个性化解答。',
-      '依据：《' + poem.title + '》· 平台诗词库',
-    ].filter(Boolean).join('\n');
+    var lines = [];
+    lines.push('【演示回复】关于《' + poem.title + '》——');
+    lines.push('学段：' + (GRADE_LABEL[poem.grade] || '') + '  朝代：' + (poem.dynasty || '') + '  作者：' + poem.author + '  主题：' + (poem.theme || ''));
+    lines.push('原文：' + (poem.lines || []).join(''));
+    lines.push('名句：' + poem.famous + '。');
+    if (poem.notes) lines.push('注释：' + poem.notes);
+    if (poem.lesson) lines.push('配套：这首诗平台已收录 AIGC 微课，可在诗词库中观看。');
+    lines.push('提示：在 CloudBase 控制台开通 AI+ 能力后，导师将生成更丰富的个性化讲解。');
+    lines.push('依据：《' + poem.title + '》· 平台诗词库');
+    return lines.join('\n');
   }
   return [
-    '这个问题我需要更多上下文才能答好～你可以：',
+    '【演示回复】这个问题我需要更多上下文才能答好～',
     '1）在诗词库里找到想学的诗，点「问数字导师」；',
     '2）或者直接问我收录篇目中的内容，例如"《静夜思》的作者是谁""会当凌绝顶是什么意思"。',
-    '',
-    '【演示模式】开通 AI+ 能力后即为完整 AI 问答。',
+    '提示：开通 AI+ 能力后即为完整 AI 问答。',
   ].join('\n');
 }
 
