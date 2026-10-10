@@ -1,9 +1,26 @@
 # 古调新弹 · 三期网站（开发仓库）
 
-## 线上地址
+## 仓库与线上地址
 
-- 首页：<https://gudiaoxintan-d6gcb88dxc336fac5-1503325630.tcloudbaseapp.com/>
+- 代码仓库：<https://github.com/Kristin1222/gudan-website>（私有，成员由仓库主邀请协作者后可访问）
+- 线上地址：<https://gudiaoxintan-d6gcb88dxc336fac5-1503325630.tcloudbaseapp.com/>
 - 环境 ID：`gudiaoxintan-d6gcb88dxc336fac5`（上海 · 体验版，有效期至 2027-04-10）
+
+### 新成员开工三步
+
+```bash
+# 1. 克隆（校园网下 GitHub 连接不稳定时需自备代理）
+git clone https://github.com/Kristin1222/gudan-website.git
+
+# 2. 安装 CLI（需 Node.js ≥ 18；内容线成员可跳过）
+npm install -g @cloudbase/cli
+
+# 3. 登录并验证
+tcb login
+tcb env:list
+```
+
+> 部署权限仅限项目负责人（环境归属其腾讯云账号）；其他成员改代码 → 提 PR 或由负责人统一部署。
 
 ## 目录结构
 
