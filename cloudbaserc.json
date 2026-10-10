@@ -11,6 +11,14 @@
       "runtime": "Nodejs20.19",
       "installDependency": true,
       "handler": "index.main"
+    },
+    {
+      "name": "chat2",
+      "timeout": 60,
+      "envVariables": [],
+      "runtime": "Nodejs20.19",
+      "installDependency": true,
+      "handler": "index.main"
     }
   ],
   "framework": {

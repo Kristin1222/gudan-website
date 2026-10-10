@@ -79,6 +79,28 @@
     }
     .modal .todo { font-size: 13px; color: #a09284; background: var(--bg); border-radius: 8px; padding: 10px 14px; }
     .modal .actions { margin-top: 18px; display: flex; gap: 10px; }
+
+    /* 结构化详情 */
+    .section {
+      margin-bottom: 14px; padding: 12px 16px;
+      background: var(--bg); border-radius: 8px; border-left: 3px solid var(--brown);
+    }
+    .section-title {
+      font-size: 13px; font-weight: 600; color: var(--brown);
+      margin: 0 0 8px; letter-spacing: 1px;
+    }
+    .section-title i { margin-right: 6px; }
+    .section-body {
+      font-size: 14px; color: var(--ink); line-height: 1.85; white-space: pre-wrap;
+    }
+    .section-body.note {
+      font-family: 'Noto Serif SC', serif; font-size: 14.5px;
+    }
+    .modal .form-tag {
+      display: inline-block; padding: 2px 10px; border-radius: 12px;
+      background: var(--cream); color: var(--brown); font-size: 12px;
+      margin-left: 8px; vertical-align: 2px;
+    }
     @media (max-width: 768px) {
       .search-box { margin-left: 0; width: 100%; }
       .filter-bar { top: 64px; }
@@ -222,22 +244,43 @@
       }
     }
 
+    function section(title, icon, body, klass) {
+      if (!body) return '';
+      return '<div class="section">' +
+             '  <div class="section-title"><i class="fa ' + icon + '"></i>' + title + '</div>' +
+             '  <div class="section-body' + (klass ? ' ' + klass : '') + '">' + body + '</div>' +
+             '</div>';
+    }
+
     function openModal(p) {
+      var notesHtml = section('注 释', 'fa-pencil', esc(p.notes), 'note');
+      var translationHtml = section('译 文', 'fa-quote-right', esc(p.translation));
+      var appreciationHtml = section('赏 析', 'fa-heart', esc(p.appreciation));
+      var backgroundHtml = section('创作背景', 'fa-clock-o', esc(p.background));
+      var authorHtml = section('作者简介', 'fa-user', esc(p.author_bio));
+
       var m = document.getElementById("modal");
       m.innerHTML =
         '<button class="close" id="modalClose"><i class="fa fa-times"></i></button>' +
-        '<h2>' + p.title + '</h2>' +
-        '<div class="meta">' + GRADE_LABEL[p.grade] + ' · ' + p.dynasty + ' · ' + p.author + ' · 主题：' + p.theme + (p.lesson ? ' · <span style="color:var(--brown)">已配微课</span>' : '') + '</div>' +
-        '<div class="full-text">' + p.lines.join("<br>") + '</div>' +
-        '<div class="famous"><i class="fa fa-star-o"></i> 名句：' + p.famous + '</div>' +
-        '<div class="todo">注释 / 译文 / 赏析 / 考点：内容组整理中，将随版本更新上线</div>' +
+        '<h2>' + esc(p.title) + (p.form ? '<span class="form-tag">' + esc(p.form) + '</span>' : '') + '</h2>' +
+        '<div class="meta">' + GRADE_LABEL[p.grade] + ' · ' + esc(p.dynasty) + ' · ' + esc(p.author) + ' · 主题：' + esc(p.theme) + (p.lesson ? ' · <span style="color:var(--brown)"><i class="fa fa-play-circle"></i> 已配微课</span>' : '') + '</div>' +
+        '<div class="full-text">' + p.lines.map(esc).join("<br>") + '</div>' +
+        '<div class="famous"><i class="fa fa-star-o"></i> 名句：' + esc(p.famous) + '</div>' +
+        notesHtml +
+        translationHtml +
+        appreciationHtml +
+        backgroundHtml +
+        authorHtml +
         '<div class="actions">' +
-        '  <a class="btn btn-primary" href="tutor.html"><i class="fa fa-comments"></i> 问数字导师</a>' +
+        '  <a class="btn btn-primary" href="tutor.html?poem=' + p.id + '"><i class="fa fa-comments"></i> 问数字导师</a>' +
         (p.lesson ? '<span class="btn btn-outline" style="opacity:.8"><i class="fa fa-film"></i> 微课制作中</span>' : '') +
         '</div>';
       document.getElementById("modalMask").classList.add("open");
       document.getElementById("modalClose").onclick = closeModal;
     }
+    function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&', '<': '<', '>': '>', '"': '"', "'": '&#39;' }[c];
+    }); }
     function closeModal() { document.getElementById("modalMask").classList.remove("open"); }
     document.getElementById("modalMask").addEventListener("click", function (e) {
       if (e.target === this) closeModal();

@@ -1,5 +1,5 @@
 /**
- * 古调新弹 · 数字导师 chat 云函数（v1.2 · CloudBase 内置 AI）
+ * 古调新弹 · 数字导师 chat 云函数（v1.3 · 智谱 GLM 优先）
  * ------------------------------------------------------
  * 流程：限额检查 → 结构化检索诗词 → 组装提示词 → 调内置 AI → 留痕 → 返回
  * 部署：tcb fn deploy chat -e gudiaoxintan-d6gcb88dxc336fac5 --force --deployMode zip
@@ -179,9 +179,43 @@ function buildSystemPrompt(poem, role, grade, func) {
   return base + '\n' + material;
 }
 
-// ---------- 第四步：调 CloudBase 内置 AI（失败时进入演示模式） ----------
+// ---------- 第四步：调 AI（多 provider 自动切换，失败时进入演示模式） ----------
+// 三种调用路径，按优先级尝试：
+//   ① GLM_API_KEY  存在 → 调智谱 BigModel（GLM-4-Flash，永久免费，国内直连）
+//   ② 默认        → 调 CloudBase 内置 AI（需环境开通 AI+ 能力，从资源点扣 Token）
+//   ③ 全部失败    → 进入 demo 模式（基于检索结果生成确定性回答）
 async function callAI(systemPrompt, message) {
-  // 1) 优先 CloudBase 内置 AI（不需要 API Key，从资源点扣 Token）
+  // 路径 ①：智谱 BigModel（GLM-4-Flash 永久免费）
+  if (process.env.GLM_API_KEY) {
+    try {
+      const resp = await fetch('https://open.bigmodel.cn/api/paas/v4/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + process.env.GLM_API_KEY,
+        },
+        body: JSON.stringify({
+          model: process.env.GLM_MODEL || 'glm-4-flash',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: message },
+          ],
+          max_tokens: 500,
+          temperature: 0.7,
+        }),
+      });
+      const data = await resp.json();
+      const reply = data.choices && data.choices[0] && data.choices[0].message
+        ? data.choices[0].message.content
+        : null;
+      if (reply) return { reply, demo: false, source: 'glm' };
+      return { reply: null, demo: true, source: 'glm-empty', error: '模型未返回内容' };
+    } catch (e) {
+      console.warn('[ai] 智谱 GLM 调用失败（回退到 CloudBase AI）：', e.message);
+    }
+  }
+
+  // 路径 ②：CloudBase 内置 AI（需开通 AI+ 能力）
   try {
     const ai = app.ai();
     const model = ai.createModel('cloudbase');
@@ -193,9 +227,8 @@ async function callAI(systemPrompt, message) {
       ],
     });
     if (result && result.text) {
-      return { reply: result.text, demo: false, source: 'ai' };
+      return { reply: result.text, demo: false, source: 'cloudbase' };
     }
-    // 模型未返回内容，走兜底
     return { reply: null, demo: true, source: 'ai-empty', error: '模型未返回内容' };
   } catch (e) {
     console.warn('[ai] CloudBase 内置 AI 调用失败（进入演示模式）：', e.message);
@@ -259,13 +292,13 @@ exports.main = async (event, context) => {
     const result = await callAI(sys, message);
     const reply = result.demo ? demoReply(poem, message) : (result.reply || '（模型未返回内容，请稍后重试）');
 
-    await saveMessage(userId, sessionId, message, reply, poem && poem.title, result.demo ? 'demo' : 'ai');
+    await saveMessage(userId, sessionId, message, reply, poem && poem.title, result.demo ? 'demo' : result.source);
 
     return ok({
       reply: reply,
       source: poem ? '《' + poem.title + '》· 平台诗词库' : '',
-      mode: result.demo ? 'demo' : 'ai',
-      aiSource: result.source, // 调试用：ai | ai-empty | ai-error
+      mode: result.demo ? 'demo' : result.source, // demo | glm | cloudbase
+      aiSource: result.source, // 调试用：glm | cloudbase | demo | ai-empty | ai-error
       quota: { used: quota.used, limit: quota.limit },
     });
   } catch (err) {
