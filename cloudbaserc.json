@@ -1,0 +1,29 @@
+{
+  "version": "2.0",
+  "envId": "gudiaoxintan-d6gcb88dxc336fac5",
+  "framework": {
+    "name": "gudan-website",
+    "plugins": {
+      "client": {
+        "use": "@cloudbase/framework-plugin-website",
+        "inputs": {
+          "localPath": "frontend",
+          "cloudPath": "/",
+          "buildCommand": ""
+        }
+      },
+      "chat": {
+        "use": "@cloudbase/framework-plugin-function",
+        "inputs": {
+          "localPath": "cloudfunctions/chat",
+          "name": "chat",
+          "envVariables": [
+            { "name": "HUNYUAN_API_KEY", "value": "TODO_部署后在控制台配置，不要写在这里" }
+          ],
+          "timeout": 60,
+          "runtime": "Nodejs18.15"
+        }
+      }
+    }
+  }
+}

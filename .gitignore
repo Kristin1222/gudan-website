@@ -1,0 +1,26 @@
+# 依赖
+node_modules/
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# 密钥与环境变量（绝不提交！）
+.env
+.env.*
+*.key
+secret*
+
+# 构建产物
+dist/
+build/
+.temp/
+.tcb/
+
+# 编辑器与系统文件
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# 日志
+*.log

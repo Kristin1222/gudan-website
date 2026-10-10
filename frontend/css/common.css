@@ -1,0 +1,163 @@
+/* ============================================================
+   古调新弹 · 全站公共样式（common.css）
+   色板与组件语言来自二期官网，冻结使用，详见《分页面设计报告》第一章
+   ============================================================ */
+
+:root {
+  /* 色板（与二期官网一致） */
+  --brown: #8b5a2b;        /* 茶褐 主色 */
+  --brown-dark: #6d4a22;   /* 深褐 hover */
+  --sand: #d4b886;         /* 沙金 辅助 */
+  --cream: #f0e6d2;        /* 米黄 衬色 */
+  --bg: #f9f7f3;           /* 暖白 底色 */
+  --ink: #3a2e2f;          /* 深褐 页脚/标题 */
+  --cinnabar: #C3272B;     /* 朱砂 警示（慎用） */
+  --green: #4A7C59;        /* 竹绿 成功态 */
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: Inter, 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+  line-height: 1.7;
+}
+
+/* ---------- 全站导航（sticky 毛玻璃） ---------- */
+.site-nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(139, 90, 43, 0.15);
+}
+.site-nav .brand {
+  font-family: 'Noto Serif SC', serif;
+  font-weight: 700;
+  font-size: 20px;
+  color: var(--brown);
+  text-decoration: none;
+}
+.site-nav .links { display: flex; gap: 28px; }
+.site-nav .links a {
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 15px;
+  position: relative;
+  padding: 4px 0;
+}
+.site-nav .links a:hover { color: var(--brown-dark); }
+.site-nav .links a.active { color: var(--brown); font-weight: 600; }
+.site-nav .links a.active::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; bottom: -4px;
+  height: 2px;
+  background: var(--brown);
+}
+
+/* ---------- 毛玻璃卡片 + hover 上浮 ---------- */
+.card {
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(58, 46, 47, 0.08);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.card-hover:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 8px 24px rgba(58, 46, 47, 0.14);
+}
+
+/* ---------- 按钮 ---------- */
+.btn {
+  display: inline-block;
+  padding: 10px 24px;
+  border-radius: 8px;
+  font-size: 15px;
+  text-decoration: none;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+}
+.btn-primary { background: var(--brown); color: #fff; }
+.btn-primary:hover { background: var(--brown-dark); }
+.btn-outline {
+  background: transparent;
+  color: var(--brown);
+  border: 1.5px solid var(--brown);
+}
+.btn-outline:hover { background: var(--cream); }
+
+/* ---------- 图标底座（w-14 米黄圆底） ---------- */
+.icon-badge {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--cream);
+  color: var(--brown);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+}
+
+/* ---------- 学段徽标 ---------- */
+.grade-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: #fff;
+}
+.grade-badge.xiaoxue { background: var(--sand); color: var(--ink); }
+.grade-badge.chuzhong { background: var(--brown); }
+.grade-badge.gaozhong { background: var(--ink); }
+
+/* ---------- 全站页脚（深褐四栏） ---------- */
+.site-footer {
+  background: var(--ink);
+  color: rgba(249, 247, 243, 0.85);
+  padding: 40px 32px 20px;
+  margin-top: 80px;
+}
+.site-footer .cols {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 32px;
+}
+.site-footer h4 { color: var(--sand); margin: 0 0 12px; font-size: 15px; }
+.site-footer a { color: rgba(249, 247, 243, 0.85); text-decoration: none; }
+.site-footer a:hover { color: var(--sand); }
+.site-footer .copyright {
+  text-align: center;
+  border-top: 1px solid rgba(249, 247, 243, 0.15);
+  margin-top: 24px;
+  padding-top: 16px;
+  font-size: 13px;
+  color: rgba(249, 247, 243, 0.55);
+}
+
+/* ---------- 滚动渐显 ---------- */
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.scroll-reveal.revealed { opacity: 1; transform: none; }
+
+/* ---------- 响应式 ---------- */
+@media (max-width: 768px) {
+  .site-nav { padding: 0 16px; }
+  .site-nav .links { display: none; } /* TODO(第1周)：汉堡按钮 + 抽屉 */
+  .site-footer .cols { grid-template-columns: 1fr 1fr; }
+}
