@@ -8,7 +8,7 @@
   - 诗词库：<https://gudiaoxintan-d6gcb88dxc336fac5-1503325630.tcloudbaseapp.com/poems.html>
   - 数字导师：<https://gudiaoxintan-d6gcb88dxc336fac5-1503325630.tcloudbaseapp.com/tutor.html>
 - 环境 ID：`gudiaoxintan-d6gcb88dxc336fac5`（上海 · 体验版，有效期至 2027-04-10）
-- 当前状态（2026-10-10）：首页、诗词库、数字导师三页 + chat 云函数全部就绪，导师 demo 模式可运行（需在控制台开通 AI+ 能力后切换为完整 AI 问答）
+- 当前状态（2026-10-10）：首页、诗词库、数字导师三页 + chat 云函数全部就绪，**50 首诗全部配齐结构化赏析（译文/注释/赏析/背景/作者/体裁）**，由智谱 GLM-4-Flash 批量生成初稿（仍有少量需人工校审）。数字导师走 智谱 GLM-4-Flash → 兜底 demo 三级链路。
 
 ### 新成员开工三步
 
