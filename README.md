@@ -3,8 +3,12 @@
 ## 仓库与线上地址
 
 - 代码仓库：<https://github.com/Kristin1222/gudan-website>（私有，成员由仓库主邀请协作者后可访问）
-- 线上地址：<https://gudiaoxintan-d6gcb88dxc336fac5-1503325630.tcloudbaseapp.com/>
+- 线上地址（均已部署）：
+  - 首页：<https://gudiaoxintan-d6gcb88dxc336fac5-1503325630.tcloudbaseapp.com/>
+  - 诗词库：<https://gudiaoxintan-d6gcb88dxc336fac5-1503325630.tcloudbaseapp.com/poems.html>
+  - 数字导师：<https://gudiaoxintan-d6gcb88dxc336fac5-1503325630.tcloudbaseapp.com/tutor.html>
 - 环境 ID：`gudiaoxintan-d6gcb88dxc336fac5`（上海 · 体验版，有效期至 2027-04-10）
+- 当前状态（2026-10-10）：首页、诗词库、数字导师三页 + chat 云函数全部就绪，导师 demo 模式可运行（需在控制台开通 AI+ 能力后切换为完整 AI 问答）
 
 ### 新成员开工三步
 
