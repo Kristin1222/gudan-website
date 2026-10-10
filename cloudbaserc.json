@@ -1,6 +1,18 @@
 {
   "version": "2.0",
   "envId": "gudiaoxintan-d6gcb88dxc336fac5",
+  "region": "ap-shanghai",
+  "functionRoot": "./cloudfunctions",
+  "functions": [
+    {
+      "name": "chat",
+      "timeout": 60,
+      "envVariables": [],
+      "runtime": "Nodejs20.19",
+      "installDependency": true,
+      "handler": "index.main"
+    }
+  ],
   "framework": {
     "name": "gudan-website",
     "plugins": {
@@ -10,18 +22,6 @@
           "localPath": "frontend",
           "cloudPath": "/",
           "buildCommand": ""
-        }
-      },
-      "chat": {
-        "use": "@cloudbase/framework-plugin-function",
-        "inputs": {
-          "localPath": "cloudfunctions/chat",
-          "name": "chat",
-          "envVariables": [
-            { "name": "HUNYUAN_API_KEY", "value": "TODO_部署后在控制台配置，不要写在这里" }
-          ],
-          "timeout": 60,
-          "runtime": "Nodejs18.15"
         }
       }
     }

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>诗词库 · 古调新弹</title>
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap">
+  <style>
+    .page-head { text-align: center; padding: 56px 24px 8px; }
+    .page-head h1 { font-family: 'Noto Serif SC', serif; font-size: 30px; color: var(--ink); margin: 0 0 8px; }
+    .page-head p { color: #8b7d6f; font-size: 14px; margin: 0; }
+    /* 筛选条 */
+    .filter-bar {
+      max-width: 1080px; margin: 28px auto 0; padding: 16px 20px;
+      display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+      position: sticky; top: 64px; z-index: 40;
+    }
+    .filter-group { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+    .filter-label { font-size: 13px; color: #8b7d6f; }
+    .chip {
+      padding: 5px 14px; border-radius: 16px; font-size: 13px; cursor: pointer;
+      border: 1px solid rgba(139, 90, 43, 0.3); color: #6b5d4f; background: #fff;
+      transition: all 0.15s ease; user-select: none;
+    }
+    .chip:hover { border-color: var(--brown); color: var(--brown); }
+    .chip.on { background: var(--brown); color: #fff; border-color: var(--brown); }
+    .search-box {
+      margin-left: auto; display: flex; align-items: center; gap: 8px;
+      background: #fff; border: 1px solid rgba(139, 90, 43, 0.3); border-radius: 20px;
+      padding: 5px 14px; min-width: 220px;
+    }
+    .search-box input { border: none; outline: none; font-size: 14px; background: transparent; flex: 1; color: var(--ink); }
+    .search-box i { color: #8b7d6f; }
+    /* 网格 */
+    .poem-grid {
+      max-width: 1080px; margin: 24px auto 0; padding: 0 24px;
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 18px;
+    }
+    .poem-card { padding: 20px; cursor: pointer; position: relative; }
+    .poem-card .title { font-family: 'Noto Serif SC', serif; font-size: 17px; font-weight: 600; color: var(--ink); }
+    .poem-card .meta { font-size: 12.5px; color: #8b7d6f; margin: 4px 0 10px; }
+    .poem-card .quote {
+      font-family: 'Noto Serif SC', serif; font-size: 13.5px; color: #6b5d4f;
+      line-height: 1.9; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .poem-card .lesson-tag {
+      position: absolute; top: 16px; right: 16px; font-size: 11px;
+      color: var(--brown); background: var(--cream); padding: 2px 8px; border-radius: 6px;
+    }
+    .result-count { max-width: 1080px; margin: 18px auto 0; padding: 0 24px; font-size: 13px; color: #8b7d6f; }
+    /* 详情弹层 */
+    .modal-mask {
+      display: none; position: fixed; inset: 0; z-index: 100;
+      background: rgba(58, 46, 47, 0.45); backdrop-filter: blur(2px);
+      align-items: center; justify-content: center; padding: 24px;
+    }
+    .modal-mask.open { display: flex; }
+    .modal {
+      background: #fff; border-radius: 14px; max-width: 560px; width: 100%;
+      max-height: 82vh; overflow-y: auto; padding: 30px 30px 24px; position: relative;
+    }
+    .modal .close {
+      position: absolute; top: 14px; right: 16px; border: none; background: none;
+      font-size: 20px; color: #8b7d6f; cursor: pointer;
+    }
+    .modal h2 { font-family: 'Noto Serif SC', serif; font-size: 24px; margin: 0 0 4px; color: var(--ink); }
+    .modal .meta { color: #8b7d6f; font-size: 14px; margin-bottom: 18px; }
+    .modal .full-text {
+      font-family: 'Noto Serif SC', serif; font-size: 17px; line-height: 2.2;
+      color: var(--ink); background: var(--bg); border-radius: 10px; padding: 18px 20px; margin-bottom: 16px;
+    }
+    .modal .famous {
+      font-size: 14px; color: var(--brown); background: var(--cream);
+      border-left: 3px solid var(--brown); padding: 10px 14px; border-radius: 0 8px 8px 0; margin-bottom: 16px;
+    }
+    .modal .todo { font-size: 13px; color: #a09284; background: var(--bg); border-radius: 8px; padding: 10px 14px; }
+    .modal .actions { margin-top: 18px; display: flex; gap: 10px; }
+    @media (max-width: 768px) {
+      .search-box { margin-left: 0; width: 100%; }
+      .filter-bar { top: 64px; }
+    }
+  </style>
+</head>
+<body data-page="poems">
+
+  <nav class="site-nav">
+    <a class="brand" href="index.html"><i class="fa fa-book" style="margin-right:8px;"></i>古调新弹</a>
+    <div class="links">
+      <a href="index.html">首页</a>
+      <a href="poems.html" class="active">诗词库</a>
+      <a href="tutor.html">数字导师</a>
+      <a href="ai-experience.html">AI 体验</a>
+      <a href="about.html">关于我们</a>
+    </div>
+    <a class="btn btn-primary" href="login.html" style="padding:8px 20px;"><i class="fa fa-user-circle mr-1"></i>登录 / 注册</a>
+  </nav>
+
+  <div class="page-head">
+    <h1>诗词库</h1>
+    <p>50 首中小学必背古诗词 · 小学 22 / 初中 16 / 高中 12 · 6 首已配 AIGC 微课</p>
+  </div>
+
+  <div class="filter-bar card">
+    <div class="filter-group" id="gradeFilter">
+      <span class="filter-label">学段</span>
+      <span class="chip on" data-v="">全部</span>
+      <span class="chip" data-v="xiaoxue">小学</span>
+      <span class="chip" data-v="chuzhong">初中</span>
+      <span class="chip" data-v="gaozhong">高中</span>
+    </div>
+    <div class="filter-group" id="themeFilter">
+      <span class="filter-label">主题</span>
+      <span class="chip on" data-v="">全部</span>
+    </div>
+    <div class="search-box">
+      <i class="fa fa-search"></i>
+      <input id="searchInput" type="text" placeholder="搜诗名 / 作者 / 名句…">
+    </div>
+  </div>
+
+  <div class="result-count" id="resultCount"></div>
+  <div class="poem-grid" id="poemGrid"></div>
+
+  <!-- 详情弹层 -->
+  <div class="modal-mask" id="modalMask">
+    <div class="modal" id="modal"></div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="cols">
+      <div>
+        <h4>古调新弹</h4>
+        <p style="font-size:13px;margin:0;">AIGC 赋能古诗词教育的路径探索<br>上海外国语大学 · 大学生创新创业训练计划</p>
+      </div>
+      <div>
+        <h4>快速导航</h4>
+        <a href="poems.html">诗词库</a><br>
+        <a href="tutor.html">数字导师</a><br>
+        <a href="ai-experience.html">AI 体验</a>
+      </div>
+      <div>
+        <h4>关于项目</h4>
+        <a href="about.html">项目介绍</a><br>
+        <a href="about.html">团队信息</a>
+      </div>
+      <div>
+        <h4>关注我们</h4>
+        <p style="font-size:13px;margin:0;">微信公众号：古调新弹<br>（二维码待补充）</p>
+      </div>
+    </div>
+    <div class="copyright">© 2026 古调新弹项目组 · 上海外国语大学国际教育学院</div>
+  </footer>
+
+  <script src="js/poems-data.js"></script>
+  <script src="js/common.js"></script>
+  <script>
+    var state = { grade: "", theme: "", q: "" };
+
+    // 动态生成主题筛选（从数据归纳，避免手写遗漏）
+    (function () {
+      var themes = [];
+      POEMS.forEach(function (p) { if (themes.indexOf(p.theme) < 0) themes.push(p.theme); });
+      var box = document.getElementById("themeFilter");
+      themes.forEach(function (t) {
+        var s = document.createElement("span");
+        s.className = "chip"; s.dataset.v = t; s.textContent = t;
+        box.appendChild(s);
+      });
+    })();
+
+    function bindChips(groupId, key) {
+      document.getElementById(groupId).addEventListener("click", function (e) {
+        if (!e.target.classList.contains("chip")) return;
+        this.querySelectorAll(".chip").forEach(function (c) { c.classList.remove("on"); });
+        e.target.classList.add("on");
+        state[key] = e.target.dataset.v;
+        render();
+      });
+    }
+    bindChips("gradeFilter", "grade");
+    bindChips("themeFilter", "theme");
+
+    document.getElementById("searchInput").addEventListener("input", function () {
+      state.q = this.value.trim(); render();
+    });
+
+    function filtered() {
+      return POEMS.filter(function (p) {
+        if (state.grade && p.grade !== state.grade) return false;
+        if (state.theme && p.theme !== state.theme) return false;
+        if (state.q) {
+          var q = state.q.toLowerCase();
+          var hay = (p.title + p.author + p.famous + p.lines.join("")).toLowerCase();
+          if (hay.indexOf(q) < 0) return false;
+        }
+        return true;
+      });
+    }
+
+    function render() {
+      var list = filtered();
+      document.getElementById("resultCount").textContent = "共 " + list.length + " 首" + (list.length < POEMS.length ? "（已筛选）" : "");
+      var grid = document.getElementById("poemGrid");
+      grid.innerHTML = "";
+      list.forEach(function (p) {
+        var d = document.createElement("div");
+        d.className = "card card-hover poem-card scroll-reveal revealed";
+        d.innerHTML =
+          (p.lesson ? '<span class="lesson-tag"><i class="fa fa-play-circle"></i> 微课</span>' : "") +
+          '<div class="title">' + p.title + '</div>' +
+          '<div class="meta">' + GRADE_LABEL[p.grade] + ' · ' + p.dynasty + ' · ' + p.author + ' · ' + p.theme + '</div>' +
+          '<div class="quote">' + p.famous + '</div>';
+        d.addEventListener("click", function () { openModal(p); });
+        grid.appendChild(d);
+      });
+      if (!list.length) {
+        grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#a09284;padding:40px 0;">没有找到相关诗词，换个关键词试试</div>';
+      }
+    }
+
+    function openModal(p) {
+      var m = document.getElementById("modal");
+      m.innerHTML =
+        '<button class="close" id="modalClose"><i class="fa fa-times"></i></button>' +
+        '<h2>' + p.title + '</h2>' +
+        '<div class="meta">' + GRADE_LABEL[p.grade] + ' · ' + p.dynasty + ' · ' + p.author + ' · 主题：' + p.theme + (p.lesson ? ' · <span style="color:var(--brown)">已配微课</span>' : '') + '</div>' +
+        '<div class="full-text">' + p.lines.join("<br>") + '</div>' +
+        '<div class="famous"><i class="fa fa-star-o"></i> 名句：' + p.famous + '</div>' +
+        '<div class="todo">注释 / 译文 / 赏析 / 考点：内容组整理中，将随版本更新上线</div>' +
+        '<div class="actions">' +
+        '  <a class="btn btn-primary" href="tutor.html"><i class="fa fa-comments"></i> 问数字导师</a>' +
+        (p.lesson ? '<span class="btn btn-outline" style="opacity:.8"><i class="fa fa-film"></i> 微课制作中</span>' : '') +
+        '</div>';
+      document.getElementById("modalMask").classList.add("open");
+      document.getElementById("modalClose").onclick = closeModal;
+    }
+    function closeModal() { document.getElementById("modalMask").classList.remove("open"); }
+    document.getElementById("modalMask").addEventListener("click", function (e) {
+      if (e.target === this) closeModal();
+    });
+
+    render();
+  </script>
+</body>
+</html>
