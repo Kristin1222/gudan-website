@@ -361,6 +361,17 @@ exports.main = async function (event) {
       if (String(event.httpMethod || '').toUpperCase() === 'OPTIONS') return '';
       let raw = event.body || '';
       if (event.isBase64Encoded) raw = Buffer.from(raw, 'base64').toString('utf-8');
+      // 腾讯云网关偶发把 UTF-8 请求体按 Latin-1 解码（中文变成 Ã¤/å­ 之类乱码，
+      // 且 JSON 结构不破坏、能正常 parse，极难发现）。检测到 Latin-1 补充区字符时
+      // 做一次 latin1→utf8 逆向修复，修复结果仍是合法 JSON 才采用。
+      if (raw && /[\u00c0-\u00ff]/.test(raw)) {
+        try {
+          const fixed = Buffer.from(raw, 'latin1').toString('utf8');
+          JSON.parse(fixed);
+          console.log('[chat] 检测到网关 UTF-8/Latin-1 乱码，已逆向修复');
+          raw = fixed;
+        } catch (e) { /* 修复后不是合法 JSON，保持原样 */ }
+      }
       let parsed = {};
       try { parsed = raw ? JSON.parse(raw) : {}; } catch (e) { parsed = {}; }
       // 合并 query 参数（支持 GET 直链测试），JSON body 优先
