@@ -351,6 +351,39 @@ async function saveMessage(userId, sessionId, question, reply, poemTitle, mode, 
   } catch (e) { console.warn('[log] 留痕失败（不阻断）：', e.message); }
 }
 
+// ---------- 意境生成（画诗词，action=image） ----------
+const STYLE_PROMPTS = {
+  shuimo: '水墨画，墨色氤氲，大片留白，意境空灵悠远',
+  gongbi: '工笔画，线条精细工整，设色典雅，细节丰富',
+  guochao: '国潮插画，现代设计感与传统元素融合，色彩鲜明醒目',
+  youhua: '油画，笔触厚重，光影温暖，构图经典',
+};
+
+function buildImagePrompt(line, styleId) {
+  const styleZh = STYLE_PROMPTS[styleId] || STYLE_PROMPTS.shuimo;
+  return '为古诗词"' + (line || '').trim() + '"创作一幅意境图。' +
+    '画面风格：' + styleZh + '。' +
+    '要求：唯美有意境，构图讲究，突出诗句情感，适合中小学教学展示，画面中不要出现文字。';
+}
+
+async function genImage(prompt) {
+  if (!process.env.GLM_API_KEY) return { ok: false, msg: '未配置图像模型密钥（GLM_API_KEY）' };
+  const resp = await fetch('https://open.bigmodel.cn/api/paas/v4/images/generations', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer ' + process.env.GLM_API_KEY,
+    },
+    body: JSON.stringify({ model: 'cogview-3-flash', prompt: prompt, size: '1024x1024' }),
+  });
+  const data = await resp.json();
+  if (data && data.data && data.data[0] && data.data[0].url) {
+    return { ok: true, url: data.data[0].url };
+  }
+  const msg = data && data.error ? (data.error.message || data.error.code) : '生成失败，请稍后重试';
+  return { ok: false, msg: msg };
+}
+
 // ---------- 入口 ----------
 exports.main = async function (event) {
   try {
@@ -379,6 +412,24 @@ exports.main = async function (event) {
       event = Object.assign({}, qs, parsed);
     }
     const body = typeof event === 'string' ? JSON.parse(event) : (event || {});
+
+    // ---- 意境生成（画诗词）分流 ----
+    if (body.action === 'image') {
+      const line = String(body.line || body.prompt || '').trim();
+      if (!line) return fail(400, '请先选择或输入一句诗词');
+      if (line.length > 120) return fail(400, '诗句太长了，请精简到 120 字以内');
+      const style = STYLE_PROMPTS[body.style] ? body.style : 'shuimo';
+      const prompt = buildImagePrompt(line, style);
+      try {
+        const r = await genImage(prompt);
+        if (!r.ok) return fail(500, r.msg);
+        return ok({ url: r.url, prompt: prompt, style: style, line: line });
+      } catch (e) {
+        console.error('[image]', e);
+        return fail(500, '意境图生成失败，请稍后重试');
+      }
+    }
+
     const message = String(body.message || '').trim();
     const mode = ['qa', 'recommend', 'creation'].indexOf(body.mode) >= 0 ? body.mode : 'qa';
     const agent = AGENT_PERSONAS[body.agent] ? body.agent : 'xiaodan';

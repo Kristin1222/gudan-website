@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 体验 · 画诗词 · 古调新弹</title>
+  <meta name="description" content="选一句诗，选一种画风，AI 为你生成诗中画。古调新弹智能意境生成——让诗中有画触手可及。">
+  <link rel="stylesheet" href="css/common.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap">
+  <style>
+    .page-hero {
+      background: linear-gradient(180deg, #f9f7f3 0%, #f0e6d2 100%);
+      padding: 56px 24px 40px;
+      text-align: center;
+    }
+    .page-hero h1 {
+      font-family: 'Noto Serif SC', serif;
+      font-size: 34px;
+      font-weight: 700;
+      color: var(--ink);
+      margin: 0 0 10px;
+    }
+    .page-hero p { color: #8b7d6f; font-size: 15px; margin: 0; }
+
+    .step-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--brown);
+      margin-bottom: 10px;
+    }
+    .step-num {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: var(--brown);
+      color: #fff;
+      font-size: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .style-card {
+      border: 2px solid transparent;
+      cursor: pointer;
+      padding: 20px 16px;
+      text-align: center;
+      transition: all 0.2s ease;
+    }
+    .style-card:hover { border-color: var(--sand); }
+    .style-card.on { border-color: var(--brown); background: #fdfaf3; }
+    .style-card .ico { font-size: 28px; color: var(--brown); margin-bottom: 8px; }
+    .style-card h3 { font-size: 15px; margin: 0 0 4px; color: var(--ink); }
+    .style-card p { font-size: 12px; color: #8b7d6f; margin: 0; }
+
+    .result-box {
+      position: relative;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #fff;
+      box-shadow: 0 4px 20px rgba(58,46,47,0.12);
+    }
+    .result-box img { width: 100%; display: block; }
+    .result-empty {
+      height: 320px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #b3a69a;
+    }
+    .result-empty .fa { font-size: 56px; margin-bottom: 12px; opacity: 0.5; }
+    .watermark-note { font-size: 12px; color: #8b7d6f; margin-top: 10px; text-align: center; }
+
+    .gallery-item {
+      cursor: pointer;
+      border-radius: 8px;
+      overflow: hidden;
+      height: 120px;
+      background: #eee;
+    }
+    .gallery-item img { width: 100%; height: 100%; object-fit: cover; }
+
+    .spin { animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body data-page="ai-experience">
+
+  <!-- ===== 全站导航 ===== -->
+  <nav class="site-nav">
+    <a class="brand" href="index.html"><i class="fa fa-book" style="margin-right:8px;"></i>古调新弹</a>
+    <div class="links">
+      <a href="index.html">首页</a>
+      <a href="poems.html">诗词库</a>
+      <a href="tutor.html">数字导师</a>
+      <a href="ai-experience.html" class="active">AI 体验</a>
+      <a href="about.html">关于我们</a>
+    </div>
+    <a class="btn btn-primary" href="login.html" style="padding:8px 20px;"><i class="fa fa-user-circle mr-1"></i>登录 / 注册</a>
+  </nav>
+
+  <!-- ===== 页面首屏 ===== -->
+  <header class="page-hero">
+    <h1>画诗词 · 智能意境生成</h1>
+    <p>选一句诗，选一种画风，AI 为你生成「诗中画」——诗中有画，触手可及</p>
+  </header>
+
+  <main class="container mx-auto px-6" style="max-width:1080px;">
+
+    <!-- ===== 三步生成流 ===== -->
+    <section style="display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-top:40px;" id="genFlow">
+      <!-- 左：选诗句 + 选风格 -->
+      <div>
+        <div style="margin-bottom:26px;">
+          <div class="step-label"><span class="step-num">1</span> 选一句诗</div>
+          <select id="poemSelect" style="width:100%;padding:12px 14px;border:1.5px solid var(--sand);border-radius:8px;background:#fff;font-size:14px;color:var(--ink);">
+            <option value="">—— 从诗词库选一首（50 首）——</option>
+          </select>
+          <textarea id="lineInput" rows="3" placeholder="或直接输入一句诗，例如：大漠孤烟直，长河落日圆" style="width:100%;margin-top:12px;padding:12px 14px;border:1.5px solid var(--sand);border-radius:8px;font-size:15px;font-family:'Noto Serif SC',serif;resize:vertical;color:var(--ink);"></textarea>
+        </div>
+
+        <div style="margin-bottom:26px;">
+          <div class="step-label"><span class="step-num">2</span> 选一种画风</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+            <div class="card style-card on" data-style="shuimo">
+              <div class="ico"><i class="fa fa-tint"></i></div>
+              <h3>水墨</h3>
+              <p>墨色氤氲 · 留白意境</p>
+            </div>
+            <div class="card style-card" data-style="gongbi">
+              <div class="ico"><i class="fa fa-pencil"></i></div>
+              <h3>工笔</h3>
+              <p>精细工整 · 设色典雅</p>
+            </div>
+            <div class="card style-card" data-style="guochao">
+              <div class="ico"><i class="fa fa-star"></i></div>
+              <h3>国潮</h3>
+              <p>传统新意 · 色彩鲜明</p>
+            </div>
+            <div class="card style-card" data-style="youhua">
+              <div class="ico"><i class="fa fa-paint-brush"></i></div>
+              <h3>油画</h3>
+              <p>笔触厚重 · 光影温暖</p>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="step-label"><span class="step-num">3</span> 一键生成</div>
+          <button id="genBtn" class="btn btn-primary" style="width:100%;padding:14px;font-size:16px;">
+            <i class="fa fa-magic mr-2"></i>生成意境图
+          </button>
+          <p style="font-size:12px;color:#8b7d6f;margin:10px 0 0;text-align:center;">生成图自动标注「古调新弹 AI 生成」，每日体验次数有限</p>
+        </div>
+      </div>
+
+      <!-- 右：结果展示 -->
+      <div>
+        <div class="step-label"><span class="step-num" style="background:var(--sand);color:var(--ink);"><i class="fa fa-image"></i></span> 生成结果</div>
+        <div class="result-box" id="resultBox">
+          <div class="result-empty" id="resultEmpty">
+            <i class="fa fa-photo"></i>
+            <div>选好诗句与画风后，点击「生成意境图」</div>
+          </div>
+          <div id="resultLoading" style="display:none;height:320px;flex-direction:column;align-items:center;justify-content:center;color:var(--brown);">
+            <i class="fa fa-circle-o-notch fa-spin" style="font-size:40px;margin-bottom:14px;"></i>
+            <div>AI 正在作画中，约需 20-40 秒…</div>
+          </div>
+          <div id="resultImg" style="display:none;">
+            <img id="resultImgEl" src="" alt="意境图">
+            <div style="padding:14px 16px;display:flex;gap:10px;align-items:center;justify-content:space-between;">
+              <div style="font-size:13px;color:#8b7d6f;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" id="resultLine"></div>
+              <div style="display:flex;gap:10px;flex-shrink:0;">
+                <a id="resultOpen" class="btn btn-outline" style="padding:6px 14px;font-size:13px;" target="_blank"><i class="fa fa-external-link mr-1"></i>查看原图</a>
+                <button id="resultSave" class="btn btn-primary" style="padding:6px 14px;font-size:13px;"><i class="fa fa-download mr-1"></i>下载</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="watermark-note"><i class="fa fa-info-circle mr-1"></i>生成图由智谱 CogView AI 生成，仅供教学演示，请尊重版权</p>
+      </div>
+    </section>
+
+    <!-- ===== 最近生成（本机） ===== -->
+    <section style="margin-top:64px;" id="gallerySec" class="scroll-reveal">
+      <h2 class="section-title" style="font-family:'Noto Serif SC',serif;font-size:24px;color:var(--ink);margin-bottom:20px;">最近生成</h2>
+      <div id="gallery" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:14px;"></div>
+      <p style="font-size:12px;color:#b3a69a;text-align:center;margin-top:16px;" id="galleryEmpty">还没有生成记录，试试上面的功能吧～</p>
+    </section>
+
+  </main>
+
+  <!-- ===== 全站页脚 ===== -->
+  <footer class="site-footer">
+    <div class="cols">
+      <div>
+        <h4>古调新弹</h4>
+        <p style="font-size:13px;margin:0;">AIGC 赋能古诗词教育的路径探索<br>上海外国语大学 · 大学生创新创业训练计划</p>
+      </div>
+      <div>
+        <h4>快速导航</h4>
+        <a href="poems.html">诗词库</a><br>
+        <a href="tutor.html">数字导师</a><br>
+        <a href="ai-experience.html">AI 体验</a>
+      </div>
+      <div>
+        <h4>关于项目</h4>
+        <a href="about.html">项目介绍</a><br>
+        <a href="about.html">团队信息</a>
+      </div>
+      <div>
+        <h4>关注我们</h4>
+        <p style="font-size:13px;margin:0;">微信公众号：古调新弹<br>（二维码待补充）</p>
+      </div>
+    </div>
+    <div class="copyright">© 2026 古调新弹项目组 · 上海外国语大学国际教育学院</div>
+  </footer>
+
+  <script src="js/poems-data.js"></script>
+  <script src="js/common.js"></script>
+  <script>
+    /* ================= 配置 ================= */
+    var CHAT_URL = 'https://gudiaoxintan-d6gcb88dxc336fac5.service.tcloudbase.com/chat';
+    var GALLERY_KEY = 'gudan_ai_images';
+    var state = { style: 'shuimo', busy: false };
+
+    /* ================= 初始化：诗词下拉 + 最近生成 ================= */
+    (function init() {
+      var sel = document.getElementById('poemSelect');
+      var groups = { xiaoxue: '小学', chuzhong: '初中', gaozhong: '高中' };
+      ['xiaoxue', 'chuzhong', 'gaozhong'].forEach(function (g) {
+        var optg = document.createElement('optgroup');
+        optg.label = groups[g];
+        POEMS.filter(function (p) { return p.grade === g; }).forEach(function (p) {
+          var o = document.createElement('option');
+          o.value = p.famous || '';
+          o.textContent = '《' + p.title + '》' + p.author + ' — ' + (p.famous || '');
+          o.setAttribute('data-poem', '《' + p.title + '》· ' + p.author);
+          optg.appendChild(o);
+        });
+        sel.appendChild(optg);
+      });
+      renderGallery();
+    })();
+
+    /* ================= 交互：选诗句 / 选风格 ================= */
+    document.getElementById('poemSelect').addEventListener('change', function (e) {
+      var sel = e.target;
+      var opt = sel.options[sel.selectedIndex];
+      if (opt && opt.value) {
+        document.getElementById('lineInput').value = opt.value;
+        document.getElementById('lineInput').setAttribute('data-poem', opt.getAttribute('data-poem') || '');
+      }
+    });
+
+    document.querySelectorAll('.style-card').forEach(function (c) {
+      c.addEventListener('click', function () {
+        document.querySelectorAll('.style-card').forEach(function (x) { x.classList.remove('on'); });
+        c.classList.add('on');
+        state.style = c.getAttribute('data-style');
+      });
+    });
+
+    /* ================= 生成 ================= */
+    function setResult(mode) {
+      document.getElementById('resultEmpty').style.display = mode === 'empty' ? 'flex' : 'none';
+      document.getElementById('resultLoading').style.display = mode === 'loading' ? 'flex' : 'none';
+      document.getElementById('resultImg').style.display = mode === 'img' ? 'block' : 'none';
+    }
+
+    document.getElementById('genBtn').addEventListener('click', generate);
+
+    async function generate() {
+      var line = document.getElementById('lineInput').value.trim();
+      if (!line) { GudanAPI.toast('请先选择或输入一句诗'); return; }
+      if (state.busy) return;
+      state.busy = true;
+      document.getElementById('genBtn').disabled = true;
+      document.getElementById('genBtn').innerHTML = '<i class="fa fa-circle-o-notch fa-spin mr-2"></i>生成中…';
+      setResult('loading');
+
+      try {
+        var res = await fetch(CHAT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'image', line: line, style: state.style })
+        });
+        var j = await res.json();
+        if (j.code !== 0) throw new Error(j.msg || '生成失败');
+        var url = j.data.url;
+        document.getElementById('resultImgEl').src = url;
+        document.getElementById('resultOpen').href = url;
+        document.getElementById('resultLine').textContent = j.data.line || line;
+        setResult('img');
+        pushGallery(url, line, state.style);
+      } catch (e) {
+        GudanAPI.toast(e.message || '生成失败，请重试');
+        setResult('empty');
+      } finally {
+        state.busy = false;
+        document.getElementById('genBtn').disabled = false;
+        document.getElementById('genBtn').innerHTML = '<i class="fa fa-magic mr-2"></i>生成意境图';
+      }
+    }
+
+    /* ================= 下载（保存到本机） ================= */
+    document.getElementById('resultSave').addEventListener('click', function () {
+      var url = document.getElementById('resultImgEl').src;
+      if (!url) return;
+      // 跨域签名 URL：直接新窗口打开，用户右键另存
+      window.open(url, '_blank');
+      GudanAPI.toast('已在新窗口打开，长按/右键即可保存');
+    });
+
+    /* ================= 最近生成（localStorage） ================= */
+    function loadGallery() {
+      try { return JSON.parse(localStorage.getItem(GALLERY_KEY) || '[]'); } catch (e) { return []; }
+    }
+    function pushGallery(url, line, style) {
+      var g = loadGallery();
+      g.unshift({ url: url, line: line, style: style, t: Date.now() });
+      localStorage.setItem(GALLERY_KEY, JSON.stringify(g.slice(0, 12)));
+      renderGallery();
+    }
+    function renderGallery() {
+      var g = loadGallery();
+      var box = document.getElementById('gallery');
+      var empty = document.getElementById('galleryEmpty');
+      box.innerHTML = '';
+      empty.style.display = g.length ? 'none' : 'block';
+      g.forEach(function (item) {
+        var d = document.createElement('div');
+        d.className = 'gallery-item';
+        d.title = item.line;
+        var img = document.createElement('img');
+        img.src = item.url;
+        img.alt = item.line;
+        img.loading = 'lazy';
+        img.onclick = function () {
+          document.getElementById('resultImgEl').src = item.url;
+          document.getElementById('resultOpen').href = item.url;
+          document.getElementById('resultLine').textContent = item.line;
+          setResult('img');
+          window.scrollTo({ top: document.getElementById('genFlow').offsetTop - 80, behavior: 'smooth' });
+        };
+        d.appendChild(img);
+        box.appendChild(d);
+      });
+    }
+  </script>
+</body>
+</html>
