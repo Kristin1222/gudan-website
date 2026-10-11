@@ -233,11 +233,11 @@
 
   <script src="js/poems-data.js"></script>
   <script src="js/common.js"></script>
-  <!-- CloudBase Web SDK：jsdelivr 在国内网络下会被 CONNECTION_CLOSED；static.cloudbase.net 只有 latest 路径有效 -->
-  <script src="https://static.cloudbase.net/cloudbase-js-sdk/latest/cloudbase.full.js"></script>
   <script>
     /* ================= 配置 ================= */
     var ENV_ID = 'gudiaoxintan-d6gcb88dxc336fac5';
+    // v2.1：改走云函数 HTTP 访问路径（无需 SDK/登录/匿名认证，CORS 由网关按安全域名白名单处理）
+    var CHAT_URL = 'https://' + ENV_ID + '.service.tcloudbase.com/chat';
     var STORE_KEY = 'gudan_tutor_sessions_v2';
 
     var AGENTS = [
@@ -408,19 +408,27 @@
       });
     }
 
-    /* ================= 云端连接 ================= */
+    /* ================= 云端连接（v2.1：HTTP 路径探测，不再依赖 SDK 登录） ================= */
     (async function connect() {
       var bar = document.getElementById('statusBar');
       try {
-        var app = cloudbase.init({ env: ENV_ID });
-        var auth = app.auth({ persistence: 'local' });
-        await auth.signInAnonymously();
-        state.cloud = app;
-        bar.textContent = '已连接云端导师（AI 满血版 · 多轮对话已开启）';
-        bar.style.color = '#4A7C59';
+        var res = await fetch(CHAT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: '' })
+        });
+        var j = await res.json();
+        if (j && typeof j.code !== 'undefined') {
+          state.cloud = CHAT_URL;
+          bar.textContent = '已连接云端导师（AI 满血版 · 多轮对话已开启）';
+          bar.style.color = '#4A7C59';
+        } else {
+          throw new Error('响应格式异常');
+        }
       } catch (e) {
         console.error('[tutor] 云端连接失败：', e);
-        bar.innerHTML = '云端未连通：' + (esc(e && (e.message || e.code || '') + '') || '未知错误') + '<br>常见原因：控制台「登录授权」未开匿名登录，或「安全域名」未加本站域名。当前为本机演示模式。';
+        bar.innerHTML = '云端未连通：' + (esc(e && (e.message || '') + '') || '未知错误') + '<br>当前为本机演示模式，稍后将自动重试。';
+        setTimeout(connect, 30000);
       }
     })();
 
@@ -476,16 +484,17 @@
       try {
         var r;
         if (state.cloud) {
-          var res = await state.cloud.callFunction({
-            name: 'chat',
-            data: {
+          var res = await fetch(state.cloud, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
               message: text, messages: history, mode: state.mode, agent: state.agent,
               grade: state.grade, role: 'guest', sessionId: state.sessionId,
-            },
+            })
           });
-          r = res && res.result;
-          if (!r || r.code !== 0) throw new Error((r && r.msg) || '云函数返回异常');
-          r = r.data;
+          var j = await res.json();
+          if (!j || j.code !== 0) throw new Error((j && j.msg) || '云函数返回异常');
+          r = j.data;
         } else {
           await new Promise(function (ok) { setTimeout(ok, 600); });
           r = localAnswer(text);

@@ -22,6 +22,11 @@
  *
  * 部署：tcb fn deploy chat -e gudiaoxintan-d6gcb88dxc336fac5 --force
  *      （CLI 部署如遇缓存不更新，改用控制台上传 cloudfunctions/chat.zip）
+ *
+ * v2.1：新增 HTTP 访问服务适配。公开地址（无需登录/SDK）：
+ *      POST https://gudiaoxintan-d6gcb88dxc336fac5.service.tcloudbase.com/chat
+ *      入参同上（JSON body），CORS 由网关按安全域名白名单自动处理。
+ *      原有 callFunction 直调方式保持兼容。
  */
 
 const cloud = require('@cloudbase/node-sdk');
@@ -349,6 +354,19 @@ async function saveMessage(userId, sessionId, question, reply, poemTitle, mode, 
 // ---------- 入口 ----------
 exports.main = async function (event) {
   try {
+    // ---- HTTP 访问服务适配（tcb service create /chat）----
+    // 集成请求结构：{path, httpMethod, headers, queryStringParameters, body, isBase64Encoded}
+    if (event && (event.httpMethod || typeof event.body === 'string')) {
+      // OPTIONS 预检由网关处理，兜底直接放行
+      if (String(event.httpMethod || '').toUpperCase() === 'OPTIONS') return '';
+      let raw = event.body || '';
+      if (event.isBase64Encoded) raw = Buffer.from(raw, 'base64').toString('utf-8');
+      let parsed = {};
+      try { parsed = raw ? JSON.parse(raw) : {}; } catch (e) { parsed = {}; }
+      // 合并 query 参数（支持 GET 直链测试），JSON body 优先
+      const qs = event.queryStringParameters || {};
+      event = Object.assign({}, qs, parsed);
+    }
     const body = typeof event === 'string' ? JSON.parse(event) : (event || {});
     const message = String(body.message || '').trim();
     const mode = ['qa', 'recommend', 'creation'].indexOf(body.mode) >= 0 ? body.mode : 'qa';
